@@ -2,73 +2,80 @@
 <html lang="uk">
 <head>
   <meta charset="utf-8">
-  <title>🌍 Планета Життя AR — Оновлена версія</title>
+  <title>🌍 Місія: Біосфера — AR Квест</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   
   <script src="https://cdn.8thwall.com/web/aframe/8frame-1.3.0.min.js"></script>
-
   <script src="https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js" async crossorigin="anonymous" data-preload-chunks="slam"></script>
-
   <script src="tap-place.js"></script>
 
   <style>
-    body { margin: 0; padding: 0; overflow: hidden; font-family: system-ui, sans-serif; }
+    body { margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    
+    /* Панелі керування */
     #camera-consent, #decoder-panel, #quiz-panel {
-      position: fixed;
-      background: rgba(0,0,0,0.88);
-      backdrop-filter: blur(12px);
-      color: white;
-      padding: 24px;
-      border-radius: 28px;
-      z-index: 1000;
-      text-align: center;
+      position: fixed; background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(15px); color: white; padding: 25px;
+      border-radius: 30px; z-index: 1000; text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);
     }
-    #camera-consent { bottom: 30px; left: 20px; right: 20px; }
-    #decoder-panel, #quiz-panel { 
-      top: 5%; left: 5%; right: 5%; bottom: 5%; 
-      display: none; overflow-y: auto; 
-    }
+    #camera-consent { bottom: 30px; left: 15px; right: 15px; }
+    #decoder-panel, #quiz-panel { top: 5%; left: 5%; right: 5%; bottom: 5%; display: none; overflow-y: auto; }
+
+    h2 { color: #60a5fa; margin-top: 0; }
+    p { font-size: 15px; line-height: 1.4; color: #cbd5e1; }
+
     button {
-      background: #4CAF50; border: none; padding: 14px 28px;
-      margin: 10px 6px; border-radius: 50px;
-      font-size: 16px; font-weight: bold; color: white; cursor: pointer;
+      background: #3b82f6; border: none; padding: 12px 25px;
+      margin: 8px; border-radius: 15px; font-size: 16px;
+      font-weight: bold; color: white; cursor: pointer; transition: 0.3s;
     }
-    .decline { background: #f44336; }
+    button:active { transform: scale(0.95); }
+    .decline { background: #ef4444; }
+    
     .fixed-btn {
-      position: fixed; top: 20px; right: 20px;
-      background: #2196F3; color: white; border: none;
-      padding: 12px 24px; border-radius: 50px;
-      font-weight: bold; z-index: 1001;
+      position: fixed; right: 20px; padding: 10px 20px;
+      border-radius: 12px; font-weight: bold; z-index: 1001;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
-    #quiz-btn { top: 75px; background: #9b59b6; }
-    input { width: 85%; padding: 14px; margin: 12px 0; border-radius: 12px; border: none; text-align: center; }
+    #open-decoder { top: 20px; background: #f59e0b; }
+    #quiz-btn { top: 75px; background: #8b5cf6; }
+
+    input { 
+      width: 90%; padding: 12px; margin: 10px 0; 
+      border-radius: 10px; border: 1px solid #334155; 
+      background: #1e293b; color: white; text-align: center; 
+    }
+    .hint { font-size: 13px; color: #94a3b8; font-style: italic; }
   </style>
 </head>
 <body>
 
-  <button id="open-decoder" class="fixed-btn" style="display:none;">🔑 Розшифрувати</button>
+  <button id="open-decoder" class="fixed-btn" style="display:none;">🔑 Ввести код</button>
   <button id="quiz-btn" class="fixed-btn" onclick="showQuiz()" style="display:none;">📝 Вікторина</button>
 
   <div id="camera-consent">
-    <p>📸 <strong>Потрібен доступ до камери</strong><br>Для створення Планети Життя у вашій кімнаті.</p>
-    <button id="accept-camera">🌍 Почати</button>
-    <button id="decline-camera" class="decline">❌ Відміна</button>
+    <h2>🌍 Привіт, досліднику!</h2>
+    <p>Сьогодні ти дізнаєшся секрети Біосфери. Наведи камеру на підлогу або стіл, знайди всі відповіді та отримай зірки Географа!</p>
+    <button id="accept-camera">🚀 Почати місію</button>
   </div>
 
   <div id="decoder-panel">
-    <h2>🔑 Декодер</h2>
-    <input id="code-input" type="text" placeholder="Введіть слово...">
-    <button id="decrypt-btn">Перевірити</button>
-    <button onclick="hideDecoder()">Закрити</button>
-    <div id="decoder-result"></div>
+    <h2>🔑 Секретний Декодер</h2>
+    <p>Введи кодове слово, яке ти дізнався у вікторині:</p>
+    <input id="code-input" type="text" placeholder="СЛОВО-ПАРОЛЬ..." autocomplete="off">
+    <br>
+    <button id="decrypt-btn">🔓 Активувати</button>
+    <button onclick="hideDecoder()">Назад</button>
+    <div id="decoder-result" style="margin-top:15px; font-weight:bold;"></div>
   </div>
 
   <div id="quiz-panel">
-    <h2>🌍 Вікторина: Біосфера</h2>
-    <div id="quiz-content"></div>
-    <button onclick="checkQuiz()">Перевірити</button>
-    <button onclick="hideQuiz()">Закрити</button>
-    <div id="quiz-result"></div>
+    <h2>📝 Тест: Оболонка життя</h2>
+    <div id="quiz-content" style="text-align: left;"></div>
+    <button onclick="checkQuiz()">Перевірити відповіді</button>
+    <button onclick="hideQuiz()">Повернутись до AR</button>
+    <div id="quiz-result" style="margin-top:15px; border-top: 1px solid #334155; padding-top:10px;"></div>
   </div>
 
   <a-scene 
@@ -83,23 +90,25 @@
 
     <a-camera id="camera" raycaster="objects: .cantap" cursor="fuse: false; rayOrigin: mouse"></a-camera>
 
-    <a-entity light="type: directional; intensity: 1.2; castShadow: true" position="4 12 6"></a-entity>
-    <a-light type="ambient" intensity="0.8"></a-light>
+    <a-entity light="type: directional; intensity: 1.5; castShadow: true" position="1 4 3"></a-entity>
+    <a-light type="ambient" intensity="1.2"></a-light>
+    <a-light type="hemisphere" groundColor="#334155" intensity="0.8"></a-light>
 
     <a-box id="ground" class="cantap" scale="1000 0.01 1000" position="0 0 0" visible="false"></a-box>
 
     <a-text
-      value="🌍 Торкніться поверхні, щоб посадити Планету"
+      id="helper-text"
+      value="🌍 Торкнись підлоги, щоб створити планету"
       position="0 1.8 -2"
       align="center"
-      width="3"
+      width="2.5"
       background="true"
-      background-color="black"
+      background-color="#1e293b"
     ></a-text>
   </a-scene>
 
   <script>
-    // Логіка кнопок (спрощена)
+    // 1. Налаштування кнопок
     const acceptBtn = document.getElementById('accept-camera');
     acceptBtn.onclick = () => {
       document.getElementById('camera-consent').style.display = 'none';
@@ -112,16 +121,20 @@
     function hideDecoder() { document.getElementById('decoder-panel').style.display = 'none'; }
     document.getElementById('open-decoder').onclick = () => { document.getElementById('decoder-panel').style.display = 'block'; };
 
-    // Вікторина
+    // 2. Питання вікторини (6 питань за текстом)
     const questions = [
-      {q: "Хто засновник учення про біосферу?", a: "вернадський"},
-      {q: "Що таке сфера розуму?", a: "ноосфера"}
+      {q: "1. Скільки млрд років тому виникло життя?", a: "3,5"},
+      {q: "2. Газ, яким рослини збагачують повітря?", a: "кисень"},
+      {q: "3. Хто засновник учення про біосферу?", a: "вернадський"},
+      {q: "4. Сфера взаємодії людини і природи?", a: "ноосфера"},
+      {q: "5. Сукупність усіх видів рослин території?", a: "флора"},
+      {q: "6. Найщільніший шар життя — це «... життя»?", a: "плівка"}
     ];
 
     function renderQuiz() {
       let h = '';
       questions.forEach((q, i) => {
-        h += `<p>${q.q}<br><input type="text" id="ans${i}"></p>`;
+        h += `<p><strong>${q.q}</strong><br><input type="text" id="ans${i}" placeholder="Відповідь..."></p>`;
       });
       document.getElementById('quiz-content').innerHTML = h;
     }
@@ -129,14 +142,29 @@
     function checkQuiz() {
       let score = 0;
       questions.forEach((q, i) => {
-        if (document.getElementById(`ans${i}`).value.toLowerCase().includes(q.a)) score++;
+        const val = document.getElementById(`ans${i}`).value.toLowerCase();
+        if (val.includes(q.a.toLowerCase())) score++;
       });
-      document.getElementById('quiz-result').innerText = `Результат: ${score}/${questions.length}`;
+
+      const res = document.getElementById('quiz-result');
+      if (score >= 5) {
+        res.innerHTML = `<span style="color:#4CAF50">⭐ Чудово! ${score}/6 вірно.</span><br>
+        🔓 ПІДКАЗКА: Секретне слово для декодера — <strong>БІОСФЕРА</strong>`;
+      } else {
+        res.innerHTML = `<span style="color:#f44336">Ти відповів на ${score} питань. Треба хоча б 5, щоб отримати код!</span>`;
+      }
     }
 
+    // 3. Робота Декодера
     document.getElementById('decrypt-btn').onclick = () => {
-      const val = document.getElementById('code-input').value.toUpperCase();
-      document.getElementById('decoder-result').innerHTML = val.includes('ЖИТТЯ') ? "✅ Вірно!" : "❌ Спробуйте ще";
+      const val = document.getElementById('code-input').value.trim().toLowerCase();
+      const res = document.getElementById('decoder-result');
+      if (val === 'біосфера') {
+        res.innerHTML = "<span style="color:#4CAF50">🚀 КОД ПРИЙНЯТО! ТИ ОТРИМАВ ЗІРКИ! ПЕРЕВІР AR!</span>";
+        if (window.spawnStars) window.spawnStars(); // Виклик функції зірок
+      } else {
+        res.innerHTML = "<span style="color:#ef4444">❌ Невірно. Шукай підказку у вікторині!</span>";
+      }
     };
   </script>
 </body>
