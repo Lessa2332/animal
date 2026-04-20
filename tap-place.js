@@ -34,7 +34,7 @@ AFRAME.registerComponent('tap-place', {
         // Анімація росту
         newPlanet.setAttribute('animation__grow', {
           property: 'scale',
-          to: '0.7 0.7 0.7', // Оптимальний розмір для дитини
+          to: '0.5 0.5 0.5', // Оптимальний розмір для дитини
           easing: 'easeOutElastic',
           dur: 1500
         });
