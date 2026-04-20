@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
   <meta charset="utf-8">
-  <title>Місія: Таємна Локація | Стартовий Модуль</title>
+  <title>Місія: Таємна Локація | Активація</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   
   <script src="https://cdn.8thwall.com/web/aframe/8frame-1.3.0.min.js"></script>
@@ -10,77 +10,53 @@
   <script src="tap-place.js"></script>
 
   <style>
-    :root { --glass: rgba(10, 15, 28, 0.95); --accent: #38bdf8; --warning: #f43f5e; }
-    body { margin: 0; overflow: hidden; font-family: 'Courier New', monospace; background: #000; color: #fff; }
+    :root { --glass: rgba(10, 15, 28, 0.95); --accent: #38bdf8; }
+    body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; color: #fff; }
 
     .glass-panel {
-      position: fixed; background: var(--glass); backdrop-filter: blur(15px);
-      border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 20px;
-      z-index: 1000; transition: 0.4s; text-align: center;
+      position: fixed; background: var(--glass); backdrop-filter: blur(20px);
+      border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 30px;
+      z-index: 1000; text-align: center; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Стартовий екран-брифінг */
-    #mission-start { bottom: 40px; left: 20px; right: 20px; padding: 25px; border-top: 4px solid var(--accent); }
+    /* Стартовий екран активації */
+    #activation-screen { top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85%; padding: 30px; }
     
-    /* Вікна взаємодії */
-    #quiz-panel, #decoder-panel { 
-      top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: 85%; padding: 25px; display: none;
+    /* HUD підказка після активації */
+    #ar-instruction { bottom: 30px; left: 20px; right: 20px; padding: 15px; display: none; border: 2px solid var(--accent); }
+
+    h2 { margin: 0 0 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+    p { font-size: 15px; color: #94a3b8; line-height: 1.4; }
+
+    .btn-activate {
+      background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none; padding: 16px;
+      border-radius: 15px; color: white; font-weight: bold; cursor: pointer; width: 100%;
+      margin-top: 20px; font-size: 16px; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
     }
 
-    .active { display: block !important; animation: scanIn 0.5s ease-out; }
-    @keyframes scanIn { from { opacity: 0; transform: translate(-50%, -60%); } to { opacity: 1; transform: translate(-50%, -50%); } }
-
-    h2 { margin: 0 0 10px; color: var(--accent); letter-spacing: 2px; font-size: 20px; }
-    p { font-size: 14px; line-height: 1.5; color: #94a3b8; }
-
-    .btn-main {
-      background: #0ea5e9; border: none; padding: 15px; border-radius: 12px;
-      color: white; font-weight: bold; cursor: pointer; width: 100%; margin-top: 15px;
-      text-transform: uppercase; letter-spacing: 1px;
+    input { 
+      width: 100%; box-sizing: border-box; padding: 15px; margin-top: 15px; 
+      border-radius: 12px; border: 1px solid #334155; background: #020617; 
+      color: var(--accent); text-align: center; font-size: 18px; font-weight: bold;
     }
 
-    .hud-btn {
-      position: fixed; right: 20px; width: 55px; height: 55px; border-radius: 50%;
-      background: var(--glass); border: 2px solid var(--accent);
-      display: flex; align-items: center; justify-content: center; z-index: 900;
-      box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
-    }
-    #btn-q { top: 20px; } /* Кнопка Брифінгу */
-    #btn-d { top: 90px; border-color: #fbbf24; } /* Кнопка Коду */
-
-    input { width: 100%; box-sizing: border-box; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid var(--accent); background: #020617; color: var(--accent); font-family: monospace; }
-    
-    .terminal-text { font-size: 12px; text-align: left; color: #4ade80; margin-bottom: 10px; }
+    .success-blink { animation: blink 0.5s ease infinite alternate; }
+    @keyframes blink { from { border-color: var(--accent); } to { border-color: #4ade80; } }
   </style>
 </head>
 <body>
 
-  <div id="btn-q" class="hud-btn" style="display:none;" onclick="togglePanel('quiz-panel')">📂</div>
-  <div id="btn-d" class="hud-btn" style="display:none;" onclick="togglePanel('decoder-panel')">📟</div>
-
-  <div id="mission-start" class="glass-panel">
-    <div class="terminal-text">> ПІДКЛЮЧЕННЯ ДО МЕРЕЖІ... OK<br>> ПОШУК АНОМАЛІЙ... ЗНАЙДЕНО</div>
-    <h2>МІСІЯ: ТАЄМНА ЛОКАЦІЯ</h2>
-    <p>Ви на місці. Розгорніть голографічну проекцію Біосфери, щоб отримати координати першого артефакту.</p>
-    <button class="btn-main" onclick="initMission()">ПРИЙНЯТИ ЗАВДАННЯ</button>
+  <div id="activation-screen" class="glass-panel">
+    <div style="font-size: 12px; color: #4ade80; margin-bottom: 10px;">> СИСТЕМА ОЧІКУЄ ПАРОЛЬ...</div>
+    <h2>АКТИВАЦІЯ АРТЕФАКТУ</h2>
+    <p>Введіть секретний код "Біосфера", щоб розблокувати доступ до голограми планети.</p>
+    <input id="code-input" type="text" placeholder="КОД..." autocomplete="off">
+    <button class="btn-activate" onclick="attemptActivation()">🔓 АКТИВУВАТИ</button>
   </div>
 
-  <div id="quiz-panel" class="glass-panel">
-    <h2>📡 СИНХРОНІЗАЦІЯ</h2>
-    <p>Введіть ключові параметри Біосфери для розблокування карти:</p>
-    <div id="quiz-content" style="text-align: left;"></div>
-    <button class="btn-main" onclick="checkQuiz()">ПЕРЕВІРИТИ ЗВ'ЯЗОК</button>
-    <button onclick="togglePanel('quiz-panel')" style="background:none; border:none; color:#64748b; margin-top:10px;">[ЗАКРИТИ]</button>
-    <div id="quiz-result" style="margin-top:10px; color: #fbbf24;"></div>
-  </div>
-
-  <div id="decoder-panel" class="glass-panel">
-    <h2>🔐 КЛЮЧ ДОСТУПУ</h2>
-    <p>Введіть пароль, отриманий після синхронізації:</p>
-    <input id="code-input" type="text" placeholder="PASSWORD..." autocomplete="off">
-    <button class="btn-main" onclick="unlockReward()">АКТИВУВАТИ КАРТУ</button>
-    <div id="decoder-result" style="margin-top:10px;"></div>
+  <div id="ar-instruction" class="glass-panel">
+    <h2 style="color: #4ade80;">ДОСТУП НАДАНО!</h2>
+    <p>Наведи камеру на підлогу та торкнись екрана, щоб викликaти планету-артефакт.</p>
   </div>
 
   <a-scene xrconfig="allowedDevices: any" xrweb tap-place>
@@ -90,52 +66,34 @@
     </a-assets>
 
     <a-camera id="camera" raycaster="objects: .planet-planted, .cantap" cursor="fuse: false; rayOrigin: mouse"></a-camera>
-    <a-light type="ambient" intensity="0.6"></a-light>
-    <a-light type="point" position="2 4 3" intensity="1.5" color="#38bdf8"></a-light>
+    <a-light type="ambient" intensity="0.7"></a-light>
+    <a-light type="directional" position="2 4 3" intensity="1"></a-light>
     
     <a-box id="ground" class="cantap" scale="1000 0.01 1000" visible="false"></a-box>
-
-    <a-text id="helper-text" value="СКАНУЙТЕ ПІДЛОГУ" position="0 1.5 -2" align="center" width="2" color="#38bdf8"></a-text>
   </a-scene>
 
   <script>
-    function initMission() {
-      document.getElementById('mission-start').style.display = 'none';
-      document.getElementById('btn-q').style.display = 'flex';
-      document.getElementById('btn-d').style.display = 'flex';
-    }
+    let isActivated = false;
 
-    function togglePanel(id) { document.getElementById(id).classList.toggle('active'); }
-
-    const missionTasks = [
-      {q: "Параметр: Час виникнення життя (млрд р.)", a: "3,5"},
-      {q: "Об'єкт: Засновник вчення про біосферу", a: "вернадський"},
-      {q: "Ціль: Як називається 'сфера розуму'?", a: "ноосфера"}
-    ];
-
-    function renderQuiz() {
-      let h = '';
-      missionTasks.forEach((t, i) => {
-        h += `<div style="margin-bottom:10px;">> ${t.q}<br><input id="ans${i}"></div>`;
-      });
-      document.getElementById('quiz-content').innerHTML = h;
-    }
-    renderQuiz();
-
-    function checkQuiz() {
-      let score = 0;
-      missionTasks.forEach((t, i) => {
-        if (document.getElementById(`ans${i}`).value.toLowerCase().includes(t.a.toLowerCase())) score++;
-      });
-      const res = document.getElementById('quiz-result');
-      if (score >= 2) res.innerHTML = "СИСТЕМА: ПАРОЛЬ — БІОСФЕРА";
-      else res.innerHTML = "ПОМИЛКА: ДАНІ НЕЗБІГАЮТЬСЯ";
-    }
-
-    function unlockReward() {
-      if (document.getElementById('code-input').value.toLowerCase().includes('біосфера')) {
-        document.getElementById('decoder-result').innerHTML = "<span style='color:#4ade80'>ДОСТУП НАДАНО. ШУКАЙТЕ ПЕРШИЙ ПАКЕТ ПІД СТОЛОМ ВЧИТЕЛЯ!</span>";
-        if (window.spawnStars) window.spawnStars();
+    function attemptActivation() {
+      const input = document.getElementById('code-input').value.trim().toLowerCase();
+      if (input === 'біосфера') {
+        isActivated = true;
+        window.isARReady = true; // Глобальна зміна для JS файлу
+        
+        // Анімація переходу
+        const screen = document.getElementById('activation-screen');
+        screen.style.opacity = '0';
+        screen.style.transform = 'translate(-50%, -60%) scale(0.9)';
+        
+        setTimeout(() => {
+          screen.style.display = 'none';
+          const instruction = document.getElementById('ar-instruction');
+          instruction.style.display = 'block';
+          instruction.classList.add('success-blink');
+        }, 500);
+      } else {
+        alert("❌ Код невірний. Спробуй ще раз!");
       }
     }
   </script>
