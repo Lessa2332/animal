@@ -35,7 +35,7 @@ AFRAME.registerComponent('tap-place', {
         newPlanet.setAttribute('visible', 'true');
         newPlanet.setAttribute('animation__grow', {
           property: 'scale',
-          to: '0.3 0.3 0.3', // Діаметр як м'яч
+          to: '0.5 0.5 0.5', // Діаметр як м'яч
           easing: 'easeOutElastic',
           dur: 1500
         });
