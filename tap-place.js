@@ -1,82 +1,115 @@
-/* globals AFRAME */
-
 AFRAME.registerComponent('tap-place', {
   init() {
     const scene = this.el.sceneEl;
 
     scene.addEventListener('click', (event) => {
-      if (!event.detail || !event.detail.intersection) return;
-
-      // КРОК 1: ПРИХОВУЄМО ТЕКСТ ВІДРАЗУ (БЕЗ ЗАТРИМКИ)
-      const helper = document.getElementById('helper-text');
-      if (helper) {
-        helper.setAttribute('visible', 'false');
+      if (event.target.classList.contains('planet-planted')) {
+        this.animatePlanet(event.target);
+        return;
       }
 
+      if (!event.detail || !event.detail.intersection) return;
+
+      const helper = document.getElementById('helper-text');
+      if (helper) helper.setAttribute('visible', 'false');
+
       const point = event.detail.intersection.point;
+      const existing = document.querySelector('.mission-group');
+      if (existing) existing.remove();
 
-      // КРОК 2: ПЛАНЕТА
-      const existing = document.querySelectorAll('.planet-planted');
-      if (existing.length >= 1) { existing[0].remove(); }
+      // Створюємо групу "Штаб"
+      const group = document.createElement('a-entity');
+      group.classList.add('mission-group');
+      group.setAttribute('position', {x: point.x, y: point.y, z: point.z});
+      scene.appendChild(group);
 
-      const newPlanet = document.createElement('a-entity');
-      newPlanet.classList.add('planet-planted');
-      const startRot = Math.random() * 360;
+      // Голограма планети
+      const planet = document.createElement('a-entity');
+      planet.classList.add('planet-planted', 'cantap');
+      planet.setAttribute('gltf-model', '#planetModel');
+      planet.setAttribute('scale', '0.001 0.001 0.001');
       
-      newPlanet.setAttribute('position', {x: point.x, y: point.y + 0.15, z: point.z});
-      newPlanet.setAttribute('rotation', {x: 0, y: startRot, z: 0});
-      newPlanet.setAttribute('scale', '0.001 0.001 0.001');
-      newPlanet.setAttribute('visible', 'false');
-      newPlanet.setAttribute('gltf-model', '#planetModel');
-
-      scene.appendChild(newPlanet);
-
-      newPlanet.addEventListener('model-loaded', () => {
-        newPlanet.setAttribute('visible', 'true');
-        newPlanet.setAttribute('animation__grow', {
-          property: 'scale',
-          to: '0.5 0.5 0.5', // Діаметр як м'яч
-          easing: 'easeOutElastic',
-          dur: 1500
-        });
-
-        newPlanet.setAttribute('animation__rotate', {
-          property: 'rotation',
-          from: `0 ${startRot} 0`,
-          to: `0 ${startRot + 360} 0`,
-          dur: 30000,
-          loop: true,
-          easing: 'linear'
-        });
+      // Анімація розгортання
+      planet.setAttribute('animation__grow', {
+        property: 'scale', to: '0.45 0.45 0.45', dur: 1200, easing: 'easeOutQuart'
       });
+      // Обертання як у радара
+      planet.setAttribute('animation__rot', {
+        property: 'rotation', to: '0 360 0', dur: 15000, loop: true, easing: 'linear'
+      });
+      group.appendChild(planet);
+
+      // Інфо-монітор
+      this.drawCanvas();
+      const info = document.createElement('a-plane');
+      info.setAttribute('width', '1.4');
+      info.setAttribute('height', '1.4');
+      info.setAttribute('position', '1.4 1 -0.3');
+      info.setAttribute('rotation', '0 -20 0');
+      info.setAttribute('material', {src: '#infoCanvas', transparent: true, opacity: 0});
+      
+      // Поява монітора
+      info.setAttribute('animation__fade', {property: 'material.opacity', to: 1, dur: 800, delay: 1000});
+      group.appendChild(info);
+    });
+  },
+
+  drawCanvas() {
+    const canvas = document.getElementById('infoCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, 512, 512);
+    
+    // Дизайн терміналу
+    ctx.fillStyle = 'rgba(2, 6, 23, 0.9)';
+    ctx.fillRect(0, 0, 512, 512);
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 10;
+    ctx.strokeRect(5, 5, 502, 502);
+
+    // Заголовок
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = 'bold 30px Courier New';
+    ctx.fillText('> ІНСТРУКЦІЯ АГЕНТА', 40, 60);
+    
+    ctx.fillStyle = '#fff';
+    ctx.font = '22px Courier New';
+    const lines = [
+      "---------------------------",
+      "КРОК 1: Пройди синхронізацію (📂)",
+      "КРОК 2: Отримай код доступу.",
+      "КРОК 3: Активуй карту (📟).",
+      "КРОК 4: Знайди перший артефакт",
+      "        у реальному класі.",
+      "---------------------------",
+      "ПАМ'ЯТАЙ: Біосфера - це ми!"
+    ];
+    lines.forEach((l, i) => ctx.fillText(l, 40, 130 + (i * 45)));
+  },
+
+  animatePlanet(el) {
+    el.setAttribute('animation__click', {
+      property: 'scale', to: '0.5 0.5 0.5', dir: 'alternate', dur: 200, loop: 1
     });
   }
 });
 
-// Система зірок
+// Ефект успіху (зірки)
 window.spawnStars = function() {
   const scene = document.querySelector('a-scene');
   const planet = document.querySelector('.planet-planted');
   if (!planet) return;
-  const pos = planet.getAttribute('position');
+  const p = planet.getAttribute('position');
 
-  for (let i = 0; i < 5; i++) {
-    const star = document.createElement('a-text');
-    star.setAttribute('value', '⭐');
-    star.setAttribute('align', 'center');
-    star.setAttribute('scale', '3 3 3');
-    const x = pos.x + (Math.random() - 0.5) * 2.5;
-    const y = pos.y + 1.2 + (Math.random() * 0.8);
-    const z = pos.z + (Math.random() - 0.5) * 2.5;
-    star.setAttribute('position', `${x} ${y} ${z}`);
-    star.setAttribute('animation', {
-      property: 'position',
-      to: `${x} ${y + 0.4} ${z}`,
-      dir: 'alternate',
-      dur: 800 + (Math.random() * 400),
-      loop: true,
-      easing: 'easeInOutQuad'
+  for (let i = 0; i < 15; i++) {
+    const s = document.createElement('a-text');
+    s.setAttribute('value', '!');
+    s.setAttribute('color', '#38bdf8');
+    s.setAttribute('position', `${p.x} ${p.y + 0.5} ${p.z}`);
+    s.setAttribute('animation', {
+      property: 'position', 
+      to: `${p.x + (Math.random()-0.5)*4} ${p.y + 3} ${p.z + (Math.random()-0.5)*4}`,
+      dur: 1500, easing: 'easeOutExpo'
     });
-    scene.appendChild(star);
+    scene.appendChild(s);
   }
 };
