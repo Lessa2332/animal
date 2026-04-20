@@ -5,56 +5,90 @@ AFRAME.registerComponent('tap-place', {
     const scene = this.el.sceneEl;
 
     scene.addEventListener('click', (event) => {
-      // Перевірка на перетин з підлогою (клас .cantap)
       if (!event.detail || !event.detail.intersection) return;
 
       const point = event.detail.intersection.point;
 
-      // Обмеження кількості (як у квітки, але ставимо 3)
+      // Видаляємо стару планету, щоб не було купи об'єктів
       const existing = document.querySelectorAll('.planet-planted');
-      if (existing.length >= 3) {
-        existing[0].remove();
-      }
+      if (existing.length >= 1) { existing[0].remove(); }
 
       const newPlanet = document.createElement('a-entity');
       newPlanet.classList.add('planet-planted');
 
-      // Випадковий поворот навколо осі Y для різноманітності
       const startRot = Math.random() * 360;
       
-      // Налаштування позиції (трохи вище точки тапу)
-      newPlanet.setAttribute('position', {x: point.x, y: point.y + 0.5, z: point.z});
+      // Позиція: y + 0.2 (нижче до підлоги)
+      newPlanet.setAttribute('position', {x: point.x, y: point.y + 0.2, z: point.z});
       newPlanet.setAttribute('rotation', {x: 0, y: startRot, z: 0});
-      newPlanet.setAttribute('scale', '0.001 0.001 0.001'); // Стартуємо з мікро-розміру
+      newPlanet.setAttribute('scale', '0.001 0.001 0.001');
       newPlanet.setAttribute('visible', 'false');
       
-      // Встановлюємо модель GLB (ідентично квіткам)
       newPlanet.setAttribute('gltf-model', '#planetModel');
 
       scene.appendChild(newPlanet);
 
-      // Очікуємо повного завантаження моделі
       newPlanet.addEventListener('model-loaded', () => {
         newPlanet.setAttribute('visible', 'true');
-
-        // Анімація "росту" (як у квітки)
+        
+        // Анімація росту
         newPlanet.setAttribute('animation__grow', {
           property: 'scale',
-          to: '1 1 1',
+          to: '0.7 0.7 0.7', // Оптимальний розмір для дитини
           easing: 'easeOutElastic',
           dur: 1500
         });
 
-        // Анімація постійного обертання (специфічно для планети)
+        // Постійне обертання
         newPlanet.setAttribute('animation__rotate', {
           property: 'rotation',
           from: `0 ${startRot} 0`,
           to: `0 ${startRot + 360} 0`,
-          dur: 25000,
+          dur: 30000,
           loop: true,
           easing: 'linear'
         });
+        
+        // Сховати текст-підказку після першого тапу
+        const helper = document.getElementById('helper-text');
+        if (helper) helper.setAttribute('visible', 'false');
       });
     });
   }
 });
+
+// Функція нагороди (зірки)
+window.spawnStars = function() {
+  const scene = document.querySelector('a-scene');
+  const planet = document.querySelector('.planet-planted');
+  
+  if (!planet) return;
+
+  const pos = planet.getAttribute('position');
+
+  for (let i = 0; i < 5; i++) {
+    const star = document.createElement('a-text');
+    star.setAttribute('value', '⭐');
+    star.setAttribute('align', 'center');
+    star.setAttribute('scale', '3 3 3');
+    
+    // Позиція зірок навколо планети
+    const x = pos.x + (Math.random() - 0.5) * 2.5;
+    const y = pos.y + 1.2 + (Math.random() * 0.8);
+    const z = pos.z + (Math.random() - 0.5) * 2.5;
+    
+    star.setAttribute('position', `${x} ${y} ${z}`);
+    
+    // Анімація "підстрибування"
+    star.setAttribute('animation', {
+      property: 'position',
+      to: `${x} ${y + 0.4} ${z}`,
+      dir: 'alternate',
+      dur: 800 + (Math.random() * 400),
+      loop: true,
+      easing: 'easeInOutQuad'
+    });
+
+    scene.appendChild(star);
+  }
+};
