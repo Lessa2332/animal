@@ -4,31 +4,129 @@
   <meta charset="utf-8">
   <title>🌍 Місія: Таємна Локація</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <!-- 8thWall + A-Frame (актуальні версії 2026) -->
   <script src="https://cdn.8thwall.com/web/aframe/8frame-1.3.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js" async crossorigin="anonymous" data-preload-chunks="slam"></script>
+  <!-- Наш компонент tap-place (виправлений) -->
   <script src="tap-place.js"></script>
 
   <style>
-    :root { --glass: rgba(15, 23, 42, 0.95); --accent: #38bdf8; }
-    body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; color: white; }
-    .glass-panel { position: fixed; background: var(--glass); backdrop-filter: blur(15px); border-radius: 25px; z-index: 1000; text-align: center; border: 1px solid rgba(255,255,255,0.1); padding: 20px; transition: 0.4s; }
-    
-    #mission-start { bottom: 20px; left: 15px; right: 15px; }
-    #quiz-panel, #decoder-panel { top: 5%; left: 5%; right: 5%; bottom: 5%; display: none; overflow-y: auto; }
-    #ar-instruction { bottom: 30px; left: 20px; right: 20px; display: none; border: 2px solid #4ade80; }
-    
-    .fixed-btn { position: fixed; right: 20px; padding: 12px 20px; border-radius: 12px; font-weight: bold; z-index: 1001; display: none; border: none; color: white; }
-    #quiz-btn { top: 20px; background: #8b5cf6; }
-    #open-decoder { top: 80px; background: #64748b; opacity: 0.5; } /* Спочатку неактивна */
-
-    input { width: 90%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #334155; background: #1e293b; color: white; text-align: center; }
-    button { background: #3b82f6; border: none; padding: 12px 20px; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; margin: 5px; }
+    :root {
+      --glass: rgba(10, 20, 30, 0.92);
+      --accent: #38bdf8;
+    }
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Segoe UI', 'Roboto', system-ui, sans-serif;
+      background: black;
+      color: white;
+      touch-action: none; /* покращує тач на мобільних */
+    }
+    .glass-panel {
+      position: fixed;
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+      border-radius: 32px;
+      z-index: 1000;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 20px;
+      transition: 0.3s;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    #mission-start {
+      bottom: 20px;
+      left: 16px;
+      right: 16px;
+    }
+    #quiz-panel, #decoder-panel {
+      top: 10%;
+      left: 5%;
+      right: 5%;
+      bottom: 10%;
+      display: none;
+      overflow-y: auto;
+    }
+    #ar-instruction {
+      bottom: 30px;
+      left: 20px;
+      right: 20px;
+      display: none;
+      border: 2px solid #4ade80;
+      background: rgba(0,0,0,0.8);
+    }
+    .fixed-btn {
+      position: fixed;
+      right: 20px;
+      padding: 12px 22px;
+      border-radius: 40px;
+      font-weight: bold;
+      z-index: 1001;
+      display: none;
+      border: none;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: transform 0.1s;
+    }
+    .fixed-btn:active { transform: scale(0.96); }
+    #quiz-btn {
+      top: 20px;
+      background: #8b5cf6;
+    }
+    #open-decoder {
+      top: 90px;
+      background: #64748b;
+      opacity: 0.5;
+      pointer-events: none; /* неактивна до проходження тесту */
+    }
+    #open-decoder.active {
+      opacity: 1;
+      background: #f59e0b;
+      pointer-events: auto;
+    }
+    input {
+      width: 85%;
+      padding: 14px;
+      margin: 12px 0;
+      border-radius: 60px;
+      border: none;
+      background: #1e293b;
+      color: white;
+      text-align: center;
+      font-size: 18px;
+    }
+    button {
+      background: #3b82f6;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 40px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 8px;
+      font-size: 16px;
+    }
+    button:active { transform: scale(0.97); }
+    h2 { font-size: 1.6rem; margin: 0 0 12px 0; }
+    .quiz-question {
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 10px;
+      margin: 12px 0;
+    }
+    .quiz-question p { margin: 0 0 8px 0; font-weight: bold; }
+    .result-ok { color: #4ade80; }
+    .result-bad { color: #f87171; }
   </style>
 </head>
 <body>
 
-  <button id="quiz-btn" class="fixed-btn" onclick="showQuiz()">📝 Тест</button>
-  <button id="open-decoder" class="fixed-btn" disabled>🔒 Код заблоковано</button>
+  <button id="quiz-btn" class="fixed-btn">📝 Тест</button>
+  <button id="open-decoder" class="fixed-btn">🔒 Код заблоковано</button>
 
   <div id="mission-start" class="glass-panel">
     <h2>🕵️ СТАТУС: ПРИБУТТЯ</h2>
@@ -38,39 +136,49 @@
 
   <div id="quiz-panel" class="glass-panel">
     <h2>📡 СИНХРОНІЗАЦІЯ</h2>
-    <div id="quiz-content" style="text-align: left; font-size: 14px;"></div>
+    <div id="quiz-content" style="text-align: left; font-size: 16px;"></div>
     <button onclick="checkQuiz()">ПЕРЕВІРИТИ</button>
     <button onclick="hideQuiz()">ЗАКРИТИ</button>
-    <div id="quiz-result" style="margin-top:10px; font-weight: bold;"></div>
+    <div id="quiz-result" style="margin-top:12px; font-weight: bold;"></div>
   </div>
 
   <div id="decoder-panel" class="glass-panel">
     <h2>🔐 ДЕШИФРАТОР</h2>
-    <input id="code-input" type="text" placeholder="ПАРОЛЬ...">
+    <input id="code-input" type="text" placeholder="Введіть пароль...">
     <button onclick="attemptActivation()">🔓 АКТИВУВАТИ</button>
     <button onclick="hideDecoder()">НАЗАД</button>
   </div>
 
   <div id="ar-instruction" class="glass-panel">
-    <h2 style="color: #4ade80;">ОБ'ЄКТ ВИЯВЛЕНО</h2>
-    <p>Торкнись підлоги, щоб розгорнути Біосферу.</p>
+    <h2 style="color: #4ade80;">🌍 БІОСФЕРА ГОТОВА</h2>
+    <p>Торкнись підлоги, щоб розмістити планету.</p>
+    <p style="font-size: 14px;">👇 Потім торкнись планети, щоб забрати артефакт!</p>
   </div>
 
+  <!-- A-FRAME СЦЕНА -->
   <a-scene xrconfig="allowedDevices: any" xrweb="disableWorldTracking: false" ar-hit-test="mode: plane" tap-place>
-    <a-assets><a-asset-item id="planetModel" src="planet.glb"></a-asset-item><canvas id="infoCanvas" width="512" height="512" style="display:none;"></canvas></a-assets>
+    <a-assets>
+      <a-asset-item id="planetModel" src="planet.glb"></a-asset-item>
+      <canvas id="infoCanvas" width="512" height="512" style="display:none;"></canvas>
+    </a-assets>
     <a-camera id="camera" raycaster="objects: .planet-planted, .cantap" cursor="fuse: false; rayOrigin: mouse"></a-camera>
-    <a-light type="ambient" intensity="1"></a-light>
-    <a-light type="directional" position="1 4 3" intensity="1"></a-light>
-    <a-box id="ground" class="cantap" scale="1000 0.01 1000" visible="false"></a-box>
+    <a-light type="ambient" intensity="0.8"></a-light>
+    <a-light type="directional" position="1 4 3" intensity="1.2"></a-light>
+    <!-- Напівпрозора площина для зручного тапу (невидима, але перехоплює кліки) -->
+    <a-box id="ground" class="cantap" scale="1000 0.01 1000" visible="true" opacity="0" material="transparent: true"></a-box>
   </a-scene>
 
   <script>
+    // Глобальний стан
     window.isARReady = false;
+    let quizPassed = false;
+
+    // Оновлені питання (зрозумілі для дитини)
     const questions = [
-      {q: "1. Час виникнення життя (млрд р)?", a: "3,5"},
-      {q: "2. Хто засновник вчення про біосферу?", a: "вернадський"},
-      {q: "3. Основні групи живих організмів (Р, Т, Г, Б, В)?", a: ""}, // Логіка в checkQuiz
-      {q: "4. Як називається 'сфера розуму'?", a: "ноосфера"}
+      { q: "1. Скільки мільярдів років тому виникло життя на Землі?", a: "3,5", hint: "3,5 млрд" },
+      { q: "2. Хто засновник вчення про біосферу?", a: "вернадський", hint: "Прізвище вченого" },
+      { q: "3. Назви П'ять основних груп живих організмів (рослини, тварини, гриби, бактерії, віруси).", a: "рослини тварини гриби бактерії віруси", multi: true },
+      { q: "4. Як називається «сфера розуму»?", a: "ноосфера", hint: "Починається на «ноо»" }
     ];
 
     function startMission() {
@@ -79,45 +187,75 @@
       document.getElementById('open-decoder').style.display = 'block';
     }
 
-    function showQuiz() { document.getElementById('quiz-panel').style.display = 'block'; renderQuiz(); }
+    function showQuiz() {
+      document.getElementById('quiz-panel').style.display = 'block';
+      renderQuiz();
+    }
     function hideQuiz() { document.getElementById('quiz-panel').style.display = 'none'; }
     function hideDecoder() { document.getElementById('decoder-panel').style.display = 'none'; }
-    document.getElementById('open-decoder').onclick = () => { document.getElementById('decoder-panel').style.display = 'block'; };
 
     function renderQuiz() {
-      let h = '';
-      questions.forEach((q, i) => { h += `<p>${q.q}<br><input id="ans${i}"></p>`; });
-      document.getElementById('quiz-content').innerHTML = h;
+      let html = '';
+      questions.forEach((q, idx) => {
+        html += `<div class="quiz-question"><p>${q.q}</p><input id="ans${idx}" placeholder="Ваша відповідь" autocomplete="off"></div>`;
+      });
+      document.getElementById('quiz-content').innerHTML = html;
     }
 
     function checkQuiz() {
       let score = 0;
-      questions.forEach((q, i) => {
-        const val = document.getElementById(`ans${i}`).value.toLowerCase();
-        if (i === 2) {
-          if (val.includes("рослини") && val.includes("тварини") && val.includes("гриби")) score++;
-        } else if (val.includes(q.a.toLowerCase()) && q.a !== "") {
+      // Питання 3 (індекс 2) – перевіряємо всі 5 груп
+      const answer3 = document.getElementById('ans2').value.toLowerCase().trim();
+      const requiredWords = ["рослини", "тварини", "гриби", "бактерії", "віруси"];
+      let foundCount = 0;
+      requiredWords.forEach(word => {
+        if (answer3.includes(word)) foundCount++;
+      });
+      if (foundCount === 5) score++;
+      // Інші питання
+      for (let i = 0; i < questions.length; i++) {
+        if (i === 2) continue; // вже перевірили
+        const userAns = document.getElementById(`ans${i}`).value.toLowerCase().trim();
+        const correct = questions[i].a.toLowerCase();
+        if (userAns === correct || (questions[i].hint && userAns.includes(correct))) {
           score++;
         }
-      });
-
-      const res = document.getElementById('quiz-result');
-      const decBtn = document.getElementById('open-decoder');
-      if (score >= 4) {
-        res.innerHTML = "✅ ДОСТУП ВІДКРИТО! КЛЮЧ: БІОСФЕРА";
-        decBtn.disabled = false; decBtn.style.opacity = "1"; decBtn.style.background = "#f59e0b"; decBtn.innerHTML = "🔑 Ввести код";
-      } else { res.innerHTML = `Виконано: ${score}/4. Потрібні всі відповіді!`; }
+      }
+      
+      const resDiv = document.getElementById('quiz-result');
+      const decoderBtn = document.getElementById('open-decoder');
+      if (score === 4) {
+        resDiv.innerHTML = "✅ ДОСТУП ВІДКРИТО! КЛЮЧ: БІОСФЕРА";
+        resDiv.className = "result-ok";
+        quizPassed = true;
+        decoderBtn.classList.add('active');
+        decoderBtn.disabled = false;
+        decoderBtn.innerHTML = "🔑 Ввести код";
+      } else {
+        resDiv.innerHTML = `❌ Виконано: ${score}/4. Спробуй ще раз! Підказки: ${questions[2].hint ? '3 питання: всі 5 груп' : ''}`;
+        resDiv.className = "result-bad";
+      }
     }
 
     function attemptActivation() {
-      if (document.getElementById('code-input').value.trim().toLowerCase() === 'біосфера') {
+      const code = document.getElementById('code-input').value.trim().toLowerCase();
+      if (code === 'біосфера') {
         window.isARReady = true;
         hideDecoder();
         document.getElementById('quiz-btn').style.display = 'none';
         document.getElementById('open-decoder').style.display = 'none';
         document.getElementById('ar-instruction').style.display = 'block';
+        // Вібрація для фідбеку (якщо підтримується)
+        if (navigator.vibrate) navigator.vibrate(200);
+      } else {
+        alert('Невірний код! Спробуйте "БІОСФЕРА"');
       }
     }
+
+    // Відстеження готовності AR (8thWall)
+    window.addEventListener('xrloaded', () => {
+      console.log('AR engine ready');
+    });
   </script>
 </body>
 </html>
