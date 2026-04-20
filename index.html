@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
   <meta charset="utf-8">
-  <title>🌍 Планета Життя + Вулкан — AR-гра</title>
+  <title>🌍 Планета Життя — AR-вікторина</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
@@ -23,90 +23,71 @@
   <script src="tap-place.js"></script>
 
   <style>
+    body { margin: 0; padding: 0; overflow: hidden; font-family: system-ui, sans-serif; }
+
     #camera-consent, #decoder-panel, #quiz-panel {
       position: fixed;
-      background: rgba(0,0,0,0.85);
-      backdrop-filter: blur(10px);
+      background: rgba(0,0,0,0.88);
+      backdrop-filter: blur(12px);
       color: white;
-      padding: 20px;
+      padding: 24px;
       border-radius: 28px;
-      text-align: center;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.4);
       z-index: 1000;
-      font-family: system-ui, sans-serif;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-      border: 1px solid rgba(255,255,255,0.2);
+      text-align: center;
     }
-    #camera-consent { bottom: 20px; left: 20px; right: 20px; }
+    #camera-consent { bottom: 30px; left: 20px; right: 20px; }
     #decoder-panel, #quiz-panel { 
-      top: 10%; left: 5%; right: 5%; bottom: 10%; 
+      top: 8%; left: 5%; right: 5%; bottom: 8%; 
       display: none; overflow-y: auto; 
     }
+
     button {
       background: #4CAF50;
       border: none;
-      padding: 12px 28px;
-      margin: 8px;
-      border-radius: 40px;
-      font-size: 15px;
+      padding: 14px 28px;
+      margin: 10px 6px;
+      border-radius: 50px;
+      font-size: 16px;
       font-weight: bold;
-      cursor: pointer;
       color: white;
+      cursor: pointer;
     }
     .decline { background: #f44336; }
-    .fixed-btn, .mode-btn {
+    .fixed-btn {
       position: fixed;
       top: 20px;
       right: 20px;
       background: #2196F3;
       color: white;
       border: none;
-      padding: 12px 20px;
+      padding: 12px 24px;
       border-radius: 50px;
       font-size: 15px;
       font-weight: bold;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 18px rgba(0,0,0,0.35);
       z-index: 1001;
     }
-    #volcano-mode-btn { background: #e67e22; top: 70px; }
-    #erupt-btn { background: #e74c3c; top: 120px; display: none; }
-    .quiz-btn { background: #9b59b6; top: 170px; }
+    #quiz-btn { top: 75px; background: #9b59b6; }
 
-    .palette {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      right: 20px;
-      background: rgba(0,0,0,0.8);
-      backdrop-filter: blur(12px);
-      border-radius: 20px;
-      padding: 12px;
-      display: none;
-      justify-content: space-around;
-      z-index: 1000;
+    input {
+      width: 85%;
+      padding: 14px;
+      margin: 12px 0;
+      border-radius: 12px;
+      border: none;
+      font-size: 17px;
+      text-align: center;
     }
-    .palette button {
-      flex: 1;
-      margin: 0 4px;
-      font-size: 13px;
-      padding: 10px 8px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
-    .palette button.active {
-      background: #ffeb3b;
-      color: #222;
-      transform: scale(1.1);
-    }
+
     .privacy-link {
       position: fixed;
-      bottom: 12px;
-      right: 12px;
-      background: rgba(0,0,0,0.5);
-      padding: 6px 12px;
+      bottom: 16px;
+      right: 16px;
+      background: rgba(0,0,0,0.6);
+      padding: 8px 14px;
       border-radius: 20px;
-      font-size: 11px;
+      font-size: 12px;
       z-index: 1000;
     }
   </style>
@@ -115,42 +96,35 @@
 
   <!-- Кнопки управління -->
   <button id="open-decoder" class="fixed-btn">🔑 Розшифрувати</button>
-  <button id="volcano-mode-btn" class="mode-btn" onclick="switchToVolcano()">🌋 Будувати вулкан</button>
-  <button id="erupt-btn" onclick="triggerEruption()">🌋 ВИВЕРЖЕННЯ!</button>
-  <button id="quiz-btn" class="quiz-btn" onclick="showQuiz()">📝 Вікторина: Біосфера</button>
-
-  <!-- Палітра для вулкана -->
-  <div class="palette" id="palette">
-    <button id="btn-rock" data-type="rock" class="active">🪨<br>Скеля</button>
-    <button id="btn-earth" data-type="earth">🌍<br>Земля</button>
-    <button id="btn-lava" data-type="lava">🔥<br>Лава</button>
-  </div>
+  <button id="quiz-btn" class="fixed-btn" onclick="showQuiz()">📝 Вікторина: Біосфера</button>
 
   <!-- Camera consent -->
   <div id="camera-consent">
-    <p>📸 <strong>Для гри потрібна камера</strong><br>Відео не записується. Жодні дані не збираються.</p>
+    <p><strong>📸 Для гри потрібна камера</strong><br>
+       Відео не записується і не передається.<br>
+       Жодні дані не збираються.</p>
     <button id="accept-camera">🌍 Почати гру</button>
     <button id="decline-camera" class="decline">❌ Відмовитись</button>
   </div>
 
-  <!-- Декодер (залишив як був) -->
+  <!-- Декодер -->
   <div id="decoder-panel">
     <h2>🌍 Обійди планету і знайди букви!</h2>
-    <p>Введи всі букви, які побачив на текстурі:</p>
-    <input id="code-input" type="text" placeholder="Наприклад: ЖИТТЯ" style="width: 80%; padding: 12px; border-radius: 12px; border: none; font-size: 18px; text-align: center; margin: 15px 0;">
+    <p>Знайди всі букви на поверхні планети під час її обертання<br>і введи їх тут:</p>
+    <input id="code-input" type="text" placeholder="Наприклад: ЖИТТЯ" autocomplete="off">
     <br>
     <button id="decrypt-btn">Розшифрувати</button>
     <button onclick="hideDecoder()">Закрити</button>
-    <div id="result" style="margin-top: 15px; min-height: 30px; font-size: 18px;"></div>
+    <div id="decoder-result" style="margin-top: 20px; font-size: 19px; min-height: 40px;"></div>
   </div>
 
   <!-- Вікторина -->
   <div id="quiz-panel">
     <h2>🌍 Вікторина: Біосфера</h2>
-    <div id="quiz-content" style="text-align: left;"></div>
+    <div id="quiz-content" style="text-align: left; margin-bottom: 20px;"></div>
     <button onclick="checkQuiz()">Перевірити відповіді</button>
-    <button onclick="hideQuiz()">Закрити</button>
-    <div id="quiz-result" style="margin-top:15px; font-size:18px;"></div>
+    <button onclick="hideQuiz()">Закрити вікторину</button>
+    <div id="quiz-result" style="margin-top: 20px; font-size: 19px;"></div>
   </div>
 
   <a-scene xrconfig="allowedDevices: any" xrweb="disableWorldTracking: false" ar-hit-test="mode: plane" tap-place>
@@ -160,22 +134,22 @@
 
     <a-camera id="camera" raycaster="objects: .cantap" cursor="fuse: false; rayOrigin: mouse"></a-camera>
 
-    <a-entity light="type: directional; intensity: 1.2; castShadow: true" position="4 12 6"></a-entity>
-    <a-light type="ambient" intensity="0.8"></a-light>
+    <a-entity light="type: directional; intensity: 1.25; castShadow: true" position="4 12 6"></a-entity>
+    <a-light type="ambient" intensity="0.85"></a-light>
 
-    <!-- Невидима земля -->
+    <!-- Невидима поверхня для тапу -->
     <a-box id="ground" class="cantap" scale="4000 0.05 4000" position="0 -0.02 0" visible="false" 
            material="shader: flat; color: #228B22; transparent: true; opacity: 0"></a-box>
 
-    <!-- Підказка -->
+    <!-- Підказка для користувача -->
     <a-text
-      value="🌍 Торкнись підлоги, щоб створити Планету Життя\nОбійди її — знайди букви!\nПотім можеш побудувати вулкан"
-      position="0 1.7 -2.5"
+      value="🌍 Торкнись підлоги або столу, щоб створити Планету Життя\nОбійди її навколо — знайди всі букви!"
+      position="0 1.75 -2.6"
       align="center"
       color="#ffffff"
-      width="3.4"
+      width="3.6"
       background="true"
-      background-color="rgba(0,0,0,0.7)"
+      background-color="rgba(0,0,0,0.72)"
     ></a-text>
   </a-scene>
 
@@ -184,20 +158,11 @@
   </div>
 
   <script>
-    // === Основні елементи ===
+    // Основні елементи
     const consentDiv = document.getElementById('camera-consent');
     const acceptBtn = document.getElementById('accept-camera');
     const declineBtn = document.getElementById('decline-camera');
-
-    // Кнопки
     const openDecoderBtn = document.getElementById('open-decoder');
-    const volcanoModeBtn = document.getElementById('volcano-mode-btn');
-    const eruptBtn = document.getElementById('erupt-btn');
-    const quizBtn = document.getElementById('quiz-btn');
-    const palette = document.getElementById('palette');
-
-    let isVolcanoMode = false;
-    window.selectedBlock = 'rock';
 
     // Дозвіл камери
     acceptBtn.onclick = () => {
@@ -206,13 +171,13 @@
     };
 
     declineBtn.onclick = () => {
-      consentDiv.innerHTML = '<p>❌ Без камери гра неможлива. Оновіть сторінку.</p>';
+      consentDiv.innerHTML = '<p>❌ Без доступу до камери гра неможлива.<br>Оновіть сторінку, якщо передумаєте.</p>';
     };
 
-    // === Декодер ===
+    // === ДЕКОДЕР ===
     function showDecoder() {
       document.getElementById('decoder-panel').style.display = 'block';
-      document.getElementById('result').innerHTML = '';
+      document.getElementById('decoder-result').innerHTML = '';
     }
     function hideDecoder() {
       document.getElementById('decoder-panel').style.display = 'none';
@@ -221,93 +186,29 @@
 
     document.getElementById('decrypt-btn').onclick = () => {
       const input = document.getElementById('code-input').value.trim().toUpperCase();
-      const resultEl = document.getElementById('result');
-      if (input === 'ЖИТТЯ') {
-        resultEl.innerHTML = `<span style="color:#4CAF50; font-size:22px">✅ Правильно!<br>Слово-код: <strong>Життя</strong> 🌍</span>`;
+      const resultEl = document.getElementById('decoder-result');
+
+      if (input === 'ЖИТТЯ' || input.includes('ЖИТТЯ')) {
+        resultEl.innerHTML = `<span style="color:#4CAF50">✅ Правильно!<br>Слово-код: <strong>Життя</strong> 🌍</span>`;
       } else {
-        resultEl.innerHTML = `<span style="color:#f44336">❌ Неправильно. Спробуй ще раз!</span>`;
+        resultEl.innerHTML = `<span style="color:#f44336">❌ Неправильно.<br>Спробуй ще раз!</span>`;
       }
     };
 
-    // === Перемикання режимів ===
-    window.switchToVolcano = () => {
-      isVolcanoMode = true;
-      volcanoModeBtn.style.display = 'none';
-      eruptBtn.style.display = 'block';
-      palette.style.display = 'flex';
-      alert('🌋 Режим вулкана увімкнено!\nТапай на планету або поруч, щоб будувати.');
-    };
-
-    window.switchToPlanet = () => {
-      isVolcanoMode = false;
-      volcanoModeBtn.style.display = 'block';
-      eruptBtn.style.display = 'none';
-      palette.style.display = 'none';
-    };
-
-    // === Виверження ===
-    window.triggerEruption = () => {
-      const cubes = document.querySelectorAll('.volcano-block');
-      if (cubes.length === 0) {
-        alert('Спочатку збудуй вулкан! 🌋');
-        return;
-      }
-
-      // Знаходимо найвищий кубик
-      let highest = cubes[0];
-      let maxY = parseFloat(highest.getAttribute('position').y);
-      cubes.forEach(c => {
-        const py = parseFloat(c.getAttribute('position').y);
-        if (py > maxY) { maxY = py; highest = c; }
-      });
-
-      const pos = highest.getAttribute('position');
-      const scene = document.querySelector('a-scene');
-
-      for (let i = 0; i < 18; i++) {
-        const particle = document.createElement('a-entity');
-        const offsetX = (Math.random() - 0.5) * 0.5;
-        const offsetZ = (Math.random() - 0.5) * 0.5;
-        const height = 2 + Math.random() * 3;
-
-        particle.setAttribute('position', `${pos.x + offsetX} ${pos.y + 0.3} ${pos.z + offsetZ}`);
-        particle.setAttribute('geometry', 'primitive: sphere; radius: 0.05');
-        particle.setAttribute('material', 'color: #ff3300; emissive: #ff8800;');
-
-        scene.appendChild(particle);
-
-        particle.setAttribute('animation', {
-          property: 'position',
-          to: `${pos.x + offsetX} ${pos.y + height} ${pos.z + offsetZ}`,
-          dur: 1000 + Math.random() * 800,
-          easing: 'easeOutQuad'
-        });
-
-        particle.setAttribute('animation__scale', {
-          property: 'scale',
-          to: '0 0 0',
-          dur: 1400 + Math.random() * 600,
-          easing: 'easeInQuad'
-        });
-
-        setTimeout(() => particle.remove(), 2500);
-      }
-    };
-
-    // === Вікторина ===
+    // === ВІКТОРИНА ===
     const quizQuestions = [
-      {q: "1. Яке значення озонового шару в атмосфері?", a: "Захищає від ультрафіолетового випромінювання"},
-      {q: "2. Що таке органічне вивітрювання?", a: "Руйнування порід за участі живих організмів"},
+      {q: "1. Яке значення озонового шару в атмосфері?", a: "Захищає від ультрафіолетового"},
+      {q: "2. Що таке органічне вивітрювання?", a: "Руйнування порід живими організмами"},
       {q: "3. Як виникли осадові породи органічного походження?", a: "З відмерлих решток рослин і тварин"},
       {q: "4. Хто засновник учення про біосферу?", a: "Володимир Вернадський"},
       {q: "5. Що таке біосфера?", a: "Простір Землі, де існує життя"},
       {q: "6. Які основні складники біосфери?", a: "Жива та нежива природа"},
       {q: "7. Де знаходяться «плівки життя»?", a: "На межі оболонок Землі"},
-      {q: "8. Скільки видів рослин приблизно описано?", a: "Близько 500 тисяч"},
-      {q: "9. Яка група має найбільше видів?", a: "Тварини"},
-      {q: "10. Що таке ноосфера?", a: "Сфера розуму людини"},
+      {q: "8. Скільки видів рослин приблизно описано?", a: "500 тисяч"},
+      {q: "9. Яка група організмів має найбільше видів?", a: "Тварини"},
+      {q: "10. Що таке ноосфера?", a: "Сфера розуму"},
       {q: "11. Що таке антропогенні екосистеми?", a: "Екосистеми, створені людиною"},
-      {q: "12. Яке головне завдання сучасної географії?", a: "Запобігти руйнівному впливу людини на природу"}
+      {q: "12. Яке головне завдання сучасної географії?", a: "Запобігти руйнуванню природи"}
     ];
 
     function showQuiz() {
@@ -315,7 +216,7 @@
       let html = '';
       quizQuestions.forEach((item, i) => {
         html += `<p><strong>${item.q}</strong><br>
-          <input type="text" id="ans${i}" placeholder="Ваша відповідь..." style="width:95%; padding:10px; margin-top:6px; border-radius:8px;"></p>`;
+          <input type="text" id="ans${i}" placeholder="Ваша відповідь..." style="width:95%; padding:12px; margin-top:8px; border-radius:10px;"></p>`;
       });
       document.getElementById('quiz-content').innerHTML = html;
       document.getElementById('quiz-result').innerHTML = '';
@@ -328,27 +229,19 @@
     function checkQuiz() {
       let correct = 0;
       quizQuestions.forEach((item, i) => {
-        const ans = document.getElementById(`ans${i}`).value.trim().toLowerCase();
-        if (ans.length > 3 && item.a.toLowerCase().includes(ans)) correct++;
+        const userAnswer = document.getElementById(`ans${i}`).value.trim().toLowerCase();
+        if (userAnswer.length > 3 && item.a.toLowerCase().includes(userAnswer)) correct++;
       });
+
       const resultEl = document.getElementById('quiz-result');
       if (correct >= 9) {
-        resultEl.innerHTML = `<span style="color:#4CAF50">🎉 Відмінно! Ти чудово знаєш біосферу!<br>Планета Життя врятована! 🌍</span>`;
+        resultEl.innerHTML = `<span style="color:#4CAF50">🎉 Відмінно! Ти добре знаєш біосферу!<br>Планета Життя врятована 🌍</span>`;
       } else if (correct >= 6) {
-        resultEl.innerHTML = `<span style="color:#FF9800">Добре! Правильних: ${correct}/12. Трохи повтори матеріал.</span>`;
+        resultEl.innerHTML = `<span style="color:#FF9800">Добре! ${correct}/12 правильних відповідей.<br>Трохи повтори матеріал.</span>`;
       } else {
-        resultEl.innerHTML = `<span style="color:#f44336">Спробуй ще раз. Правильних: ${correct}/12</span>`;
+        resultEl.innerHTML = `<span style="color:#f44336">Спробуй ще раз.<br>Правильних: ${correct}/12</span>`;
       }
     }
-
-    // Палітра блоків
-    document.querySelectorAll('#palette button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('#palette button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        window.selectedBlock = btn.dataset.type;
-      });
-    });
   </script>
 </body>
 </html>
