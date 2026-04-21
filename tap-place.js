@@ -1,190 +1,114 @@
 /* globals AFRAME, THREE */
 
-// Поліфіл для roundRect (виправлення критичного бага #1)
+// Поліфіл для roundRect (для старих iOS/Android)
 if (!CanvasRenderingContext2D.prototype.roundRect) {
   CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
     if (w < 2 * r) r = w / 2;
     if (h < 2 * r) r = h / 2;
+    this.beginPath();
     this.moveTo(x + r, y);
-    this.lineTo(x + w - r, y);
-    this.quadraticCurveTo(x + w, y, x + w, y + r);
-    this.lineTo(x + w, y + h - r);
-    this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    this.lineTo(x + r, y + h);
-    this.quadraticCurveTo(x, y + h, x, y + h - r);
-    this.lineTo(x, y + r);
-    this.quadraticCurveTo(x, y, x + r, y);
+    this.arcTo(x + w, y, x + w, y + h, r);
+    this.arcTo(x + w, y + h, x, y + h, r);
+    this.arcTo(x, y + h, x, y, r);
+    this.arcTo(x, y, x + w, y, r);
+    this.closePath();
     return this;
   };
 }
 
 AFRAME.registerComponent('tap-place', {
   init() {
-    const scene = this.el.sceneEl;
-    this.boundHandler = this.onClick.bind(this);
-    scene.addEventListener('click', this.boundHandler);
-    
-    // Для зручності зберігаємо посилання на canvas
-    this.infoCanvas = document.getElementById('infoCanvas');
+    this.el.sceneEl.addEventListener('click', (ev) => this.onClick(ev));
   },
 
   onClick(event) {
-    // Перевіряємо, чи AR активовано через квест
     if (!window.isARReady) return;
 
-    // Якщо клік по планеті – збираємо артефакт
-    const targetEl = event.target;
-    if (targetEl && targetEl.classList && targetEl.classList.contains('planet-planted')) {
-      this.collectArtifact(targetEl);
+    // Збір артефакту
+    if (event.target.classList.contains('planet-planted')) {
+      this.collectArtifact(event.target);
       return;
     }
 
-    // Інакше – розміщуємо нову планету (тільки якщо ще немає)
+    // Розміщення (тільки один раз)
     if (document.querySelector('.artifact-group')) return;
 
-    // Отримуємо точку перетину (де клікнули)
-    if (!event.detail || !event.detail.intersection) return;
-    const point = event.detail.intersection.point;
-    
-    const scene = this.el.sceneEl;
-    
-    // Група для всіх елементів артефакту
+    const intersection = event.detail.intersection;
+    if (!intersection) return;
+    const {point} = intersection;
+
     const group = document.createElement('a-entity');
     group.classList.add('artifact-group');
-    group.setAttribute('position', { x: point.x, y: point.y, z: point.z });
-    scene.appendChild(group);
+    group.setAttribute('position', point);
+    this.el.sceneEl.appendChild(group);
 
-    // Планета (модель GLB)
+    // Модель планети
     const planet = document.createElement('a-entity');
     planet.classList.add('planet-planted', 'cantap');
     planet.setAttribute('gltf-model', '#planetModel');
     planet.setAttribute('scale', '0.5 0.5 0.5');
     planet.setAttribute('animation', 'property: rotation; to: 0 360 0; dur: 15000; loop: true; easing: linear');
-    
-    // Обробник помилки завантаження моделі (виправлення #3, #10)
-    planet.addEventListener('model-error', () => {
-      console.warn('Не вдалося завантажити planet.glb');
-      const errorText = document.createElement('a-text');
-      errorText.setAttribute('value', '⚠️ Планета не завантажилась');
-      errorText.setAttribute('color', 'red');
-      errorText.setAttribute('position', '0 0.5 0');
-      group.appendChild(errorText);
-    });
-    
     group.appendChild(planet);
 
-    // Текст над планетою (з урахуванням масштабу)
-    const poleText = document.createElement('a-text');
-    poleText.setAttribute('value', "АРТЕФАКТ ЗНАЙДЕНО!\nТоркнись, щоб забрати");
-    poleText.setAttribute('align', 'center');
-    poleText.setAttribute('position', '0 0.85 0'); // трохи вище
-    poleText.setAttribute('scale', '0.8 0.8 0.8');
-    poleText.setAttribute('color', '#4ade80');
-    poleText.setAttribute('font', 'mozillavr');
-    planet.appendChild(poleText);
-
-    // Інформаційна панель поруч (з виправленим roundRect)
-    this.drawInfo();
+    // Панель з канвасом
     const infoPlane = document.createElement('a-plane');
     infoPlane.setAttribute('width', '1.5');
     infoPlane.setAttribute('height', '1.2');
-    infoPlane.setAttribute('position', '1.3 0.6 0');
-    infoPlane.setAttribute('rotation', '0 -30 0');
-    infoPlane.setAttribute('material', { src: '#infoCanvas', transparent: true });
+    infoPlane.setAttribute('position', '0 1.2 -0.5'); // Над планетою
+    infoPlane.setAttribute('material', 'src: #infoCanvas; transparent: true; side: double');
     group.appendChild(infoPlane);
 
-    // Сховати інструкцію після першого розміщення
-    const inst = document.getElementById('ar-instruction');
-    if (inst) inst.style.display = 'none';
+    this.drawInfo();
+
+    document.getElementById('ar-instruction').style.display = 'none';
   },
 
   drawInfo() {
-    const canvas = this.infoCanvas;
-    if (!canvas) return;
+    const canvas = document.getElementById('infoCanvas');
     const ctx = canvas.getContext('2d');
-    canvas.width = 512;
-    canvas.height = 512;
-    ctx.clearRect(0, 0, 512, 512);
     
-    // Фон із закругленими кутами (тепер roundRect працює!)
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
-    ctx.beginPath();
-    ctx.roundRect(0, 0, 512, 512, 50);
+    // Малюємо фон
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+    ctx.roundRect(0, 0, 512, 512, 40);
     ctx.fill();
     ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = 8;
-    ctx.beginPath();
-    ctx.roundRect(0, 0, 512, 512, 50);
+    ctx.lineWidth = 10;
     ctx.stroke();
-    
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 34px "Segoe UI", system-ui';
-    ctx.fillText('🌍 ОБ\'ЄКТ: БІОСФЕРА', 50, 85);
-    ctx.font = '26px system-ui';
-    const lines = [
-      "● Статус: Стабільний",
-      "● Рівень: Початковий",
-      "● Місія: Зібрати дані",
-      "",
-      "👉 Натисни на планету,",
-      "щоб завершити місію!"
-    ];
-    lines.forEach((line, idx) => {
-      ctx.fillText(line, 50, 170 + idx * 48);
-    });
-    
-    // Оновлюємо текстуру в A-Frame
-    canvas.needsUpdate = true;
+
+    // Текст
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 40px sans-serif';
+    ctx.fillText('🌍 ОБ\'ЄКТ: БІОСФЕРА', 40, 80);
+    ctx.font = '30px sans-serif';
+    ctx.fillText('● Стан: Стабільний', 40, 160);
+    ctx.fillText('● Місія: Виконана', 40, 210);
+    ctx.fillStyle = '#4ade80';
+    ctx.fillText('👉 ТОРКНИСЬ ПЛАНЕТИ', 40, 350);
+
+    // ОНОВЛЕННЯ ТЕКСТУРИ (важливо для A-Frame)
+    const mesh = document.querySelector('[material*="infoCanvas"]');
+    if (mesh && mesh.getObject3D('mesh')) {
+      mesh.getObject3D('mesh').material.map.needsUpdate = true;
+    }
   },
 
-  collectArtifact(planetEl) {
-    // Анімація зникнення
-    planetEl.setAttribute('animation__shrink', {
-      property: 'scale',
-      to: '0 0 0',
-      dur: 800,
-      easing: 'easeInBack'
-    });
+  collectArtifact(el) {
+    el.setAttribute('animation__shrink', 'property: scale; to: 0 0 0; dur: 600; easing: easeInBack');
     
-    // Виклик зірок з правильною позицією (виправлення #2)
-    this.spawnStarsAround(planetEl);
-    
-    // Затримка перед повідомленням та перезавантаженням
-    setTimeout(() => {
-      alert("🏆 ВІТАЮ! Ти отримав Артефакт Біосфери. Переходь до наступного завдання!");
-      // Перезавантаження через 1.5 секунди (щоб анімація завершилась)
-      setTimeout(() => location.reload(), 1500);
-    }, 900);
-  },
-
-  spawnStarsAround(planetEl) {
-    const scene = this.el.sceneEl;
-    // Отримуємо СВІТОВУ позицію планети (виправлення #2)
-    const worldPos = new THREE.Vector3();
-    planetEl.object3D.getWorldPosition(worldPos);
-    
-    for (let i = 0; i < 18; i++) {
+    // Ефект зірок
+    const pos = el.object3D.position;
+    for (let i = 0; i < 10; i++) {
       const star = document.createElement('a-text');
       star.setAttribute('value', '⭐');
-      star.setAttribute('scale', '0.5 0.5 0.5');
-      star.setAttribute('position', `${worldPos.x} ${worldPos.y + 0.6} ${worldPos.z}`);
-      star.setAttribute('animation', {
-        property: 'position',
-        to: `${worldPos.x + (Math.random() - 0.5) * 4} ${worldPos.y + 2 + Math.random() * 2} ${worldPos.z + (Math.random() - 0.5) * 4}`,
-        dur: 1200,
-        easing: 'easeOutQuad'
-      });
-      scene.appendChild(star);
-      // Видаляємо зірку після анімації (виправлення #11)
-      setTimeout(() => star.remove(), 1500);
+      star.setAttribute('position', `${pos.x} ${pos.y + 0.5} ${pos.z}`);
+      star.setAttribute('animation', `property: position; to: ${pos.x + (Math.random()-0.5)*3} ${pos.y+3} ${pos.z + (Math.random()-0.5)*3}; dur: 1000`);
+      this.el.sceneEl.appendChild(star);
+      setTimeout(() => star.remove(), 1000);
     }
-  },
 
-  remove() {
-    // Очищення слухача подій
-    const scene = this.el.sceneEl;
-    if (scene && this.boundHandler) {
-      scene.removeEventListener('click', this.boundHandler);
-    }
+    setTimeout(() => {
+      alert("🏆 Артефакт Біосфери отримано!");
+      location.reload();
+    }, 800);
   }
 });
