@@ -7,21 +7,47 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   
   <script src="https://cdn.8thwall.com/web/aframe/8frame-1.3.0.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js" async crossorigin="anonymous" data-preload-chunks="slam"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js" async crossorigin="anonymous"></script>
   
   <script src="tap-place.js" defer></script>
 
   <style>
     :root { --glass: rgba(10, 20, 30, 0.92); --accent: #38bdf8; }
     body { margin: 0; overflow: hidden; font-family: system-ui, sans-serif; background: black; color: white; touch-action: none; }
-    .glass-panel { position: fixed; background: var(--glass); backdrop-filter: blur(16px); border-radius: 24px; z-index: 1000; text-align: center; border: 1px solid rgba(255,255,255,0.2); padding: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+    
+    .glass-panel { 
+      position: fixed; 
+      background: var(--glass); 
+      backdrop-filter: blur(16px); 
+      border-radius: 24px; 
+      z-index: 1000; 
+      text-align: center; 
+      border: 1px solid rgba(255,255,255,0.2); 
+      padding: 20px; 
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3); 
+    }
+
     #mission-start { bottom: 20px; left: 16px; right: 16px; }
-    #quiz-panel, #decoder-panel { top: 5%; left: 5%; right: 5%; bottom: 5%; display: none; overflow-y: auto; }
+    #quiz-panel, #decoder-panel { top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85%; max-height: 80vh; display: none; overflow-y: auto; }
     #ar-instruction { bottom: 30px; left: 20px; right: 20px; display: none; border: 2px solid #4ade80; }
-    .fixed-btn { position: fixed; right: 20px; padding: 12px 22px; border-radius: 40px; font-weight: bold; z-index: 1001; display: none; border: none; color: white; }
+    
+    .fixed-btn { 
+      position: fixed; 
+      right: 20px; 
+      padding: 12px 22px; 
+      border-radius: 40px; 
+      font-weight: bold; 
+      z-index: 1001; 
+      display: none; 
+      border: none; 
+      color: white; 
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    
     #quiz-btn { top: 20px; background: #8b5cf6; }
     #open-decoder { top: 85px; background: #64748b; opacity: 0.5; pointer-events: none; }
     #open-decoder.active { opacity: 1; background: #f59e0b; pointer-events: auto; }
+    
     input { width: 80%; padding: 12px; margin: 10px 0; border-radius: 12px; border: none; background: #1e293b; color: white; text-align: center; font-size: 16px; }
     button { background: #3b82f6; border: none; padding: 12px 24px; border-radius: 40px; color: white; font-weight: bold; cursor: pointer; margin: 5px; }
     .quiz-question { background: rgba(255,255,255,0.1); border-radius: 15px; padding: 10px; margin: 10px 0; text-align: left; }
@@ -49,7 +75,7 @@
   <div id="decoder-panel" class="glass-panel">
     <h2>🔐 ДЕШИФРАТОР</h2>
     <p>Введіть отриманий ключ:</p>
-    <input id="code-input" type="text" placeholder="...">
+    <input id="code-input" type="text" placeholder="Введіть код тут...">
     <button onclick="attemptActivation()">🔓 АКТИВУВАТИ</button>
     <button onclick="hideDecoder()">НАЗАД</button>
   </div>
@@ -59,15 +85,30 @@
     <p>Торкнись підлоги, щоб розмістити об'єкт.</p>
   </div>
 
-  <a-scene xrconfig="allowedDevices: any" xrweb="disableWorldTracking: false" ar-hit-test="mode: plane" tap-place>
+  <a-scene 
+    xrweb="disableWorldTracking: false"
+    tap-place
+    cursor="rayOrigin: mouse; fuse: false"
+    raycaster="objects: .cantap, .planet-planted">
+
     <a-assets>
       <a-asset-item id="planetModel" src="planet.glb"></a-asset-item>
       <canvas id="infoCanvas" width="512" height="512"></canvas>
     </a-assets>
-    <a-camera id="camera" raycaster="objects: .planet-planted, .cantap" cursor="fuse: false; rayOrigin: mouse"></a-camera>
+
+    <a-camera position="0 1.6 0"></a-camera>
+
     <a-light type="ambient" intensity="0.7"></a-light>
     <a-light type="directional" position="1 4 3" intensity="1"></a-light>
-    <a-box id="ground" class="cantap" scale="100 0.01 100" visible="false"></a-box>
+
+    <a-entity 
+      id="ground" 
+      class="cantap" 
+      geometry="primitive: plane; width: 1000; height: 1000" 
+      rotation="-90 0 0" 
+      material="transparent: true; opacity: 0">
+    </a-entity>
+
   </a-scene>
 
   <script>
@@ -75,7 +116,7 @@
     const questions = [
       { q: "1. Скільки мільярдів років тому виникло життя на Землі?", a: "3,5" },
       { q: "2. Хто засновник вчення про біосферу?", a: "вернадський" },
-      { q: "3. Назви 5 груп орг-мів (через пробіл):", a: "рослини тварини гриби бактерії віруси" },
+      { q: "3. Назви головні групи організмів (через пробіл):", a: "рослини тварини гриби бактерії" },
       { q: "4. Як називається «сфера розуму»?", a: "ноосфера" }
     ];
 
@@ -86,10 +127,22 @@
       showQuiz();
     }
 
-    function showQuiz() { document.getElementById('quiz-panel').style.display = 'block'; renderQuiz(); }
-    function hideQuiz() { document.getElementById('quiz-panel').style.display = 'none'; }
-    function showDecoder() { document.getElementById('decoder-panel').style.display = 'block'; }
-    function hideDecoder() { document.getElementById('decoder-panel').style.display = 'none'; }
+    function showQuiz() { 
+      document.getElementById('quiz-panel').style.display = 'block'; 
+      renderQuiz(); 
+    }
+
+    function hideQuiz() { 
+      document.getElementById('quiz-panel').style.display = 'none'; 
+    }
+
+    function showDecoder() { 
+      document.getElementById('decoder-panel').style.display = 'block'; 
+    }
+
+    function hideDecoder() { 
+      document.getElementById('decoder-panel').style.display = 'none'; 
+    }
 
     function renderQuiz() {
       let html = '';
@@ -103,25 +156,23 @@
       let score = 0;
       questions.forEach((q, i) => {
         const val = document.getElementById(`ans${i}`).value.toLowerCase().trim();
-        if (i === 2) { // Лояльна перевірка груп
-          const found = ["рослини", "тварини", "гриби", "бактерії", "віруси"].filter(w => val.includes(w)).length;
-          if (found >= 4) score++; 
-        } else if (val.includes(q.a)) {
+        if (val.includes(q.a)) {
           score++;
         }
       });
 
       const res = document.getElementById('quiz-result');
       if (score >= 3) {
-        res.innerHTML = "✅ ГОТОВО! КЛЮЧ: <b>БІОСФЕРА</b>";
+        res.innerHTML = "<b style='color:#4ade80;'>✅ ГОТОВО! КЛЮЧ: БІОСФЕРА</b>";
         document.getElementById('open-decoder').classList.add('active');
       } else {
-        res.innerHTML = `❌ Пройдено: ${score}/4. Треба мінімум 3.`;
+        res.innerHTML = `<b style='color:#f87171;'>❌ Пройдено: ${score}/4. Треба мінімум 3.</b>`;
       }
     }
 
     function attemptActivation() {
-      if (document.getElementById('code-input').value.trim().toLowerCase() === 'біосфера') {
+      const code = document.getElementById('code-input').value.trim().toLowerCase();
+      if (code === 'біосфера') {
         window.isARReady = true;
         hideDecoder();
         document.getElementById('quiz-btn').remove();
@@ -129,7 +180,7 @@
         document.getElementById('ar-instruction').style.display = 'block';
         if (navigator.vibrate) navigator.vibrate(200);
       } else {
-        alert('Невірний код!');
+        alert('Невірний код! Спробуйте ще раз.');
       }
     }
   </script>
