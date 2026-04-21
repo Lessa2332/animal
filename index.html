@@ -4,16 +4,18 @@
   <meta charset="utf-8">
   <title>🌍 Місія: Біосфера</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  
+  <meta name="apple-mobile-web-app-capable" content="yes">
+
   <script src="https://cdn.8thwall.com/web/aframe/8frame-1.3.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js" async crossorigin="anonymous" data-preload-chunks="slam"></script>
-  
+
   <script src="tap-place.js" defer></script>
 
   <style>
     :root { --glass: rgba(10, 20, 30, 0.95); --accent: #38bdf8; }
     body { margin: 0; overflow: hidden; font-family: system-ui, sans-serif; background: black; color: white; touch-action: none; }
     
+    /* Скляні панелі інтерфейсу */
     .glass-panel { 
       position: fixed; background: var(--glass); backdrop-filter: blur(15px); 
       border-radius: 24px; z-index: 1000; text-align: center; 
@@ -22,20 +24,32 @@
     }
 
     #mission-start { bottom: 30px; left: 16px; right: 16px; }
-    #quiz-panel, #decoder-panel { top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85%; max-height: 80vh; display: none; overflow-y: auto; }
+    
+    #quiz-panel, #decoder-panel { 
+      top: 50%; left: 50%; transform: translate(-50%, -50%); 
+      width: 85%; max-height: 80vh; display: none; overflow-y: auto; 
+    }
+
     #ar-instruction { bottom: 40px; left: 20px; right: 20px; display: none; border: 2px solid #4ade80; pointer-events: none; }
     
+    /* Кнопки у верхньому куті */
     .fixed-btn { 
       position: fixed; right: 20px; padding: 12px 22px; border-radius: 40px; 
       font-weight: bold; z-index: 1001; display: none; border: none; color: white; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
     }
     #quiz-btn { top: 20px; background: #8b5cf6; }
     #open-decoder { top: 80px; background: #64748b; opacity: 0.5; pointer-events: none; }
     #open-decoder.active { opacity: 1; background: #f59e0b; pointer-events: auto; }
     
-    input { width: 85%; padding: 12px; margin: 10px 0; border-radius: 12px; border: none; background: #1e293b; color: white; text-align: center; font-size: 18px; }
-    button { background: #3b82f6; border: none; padding: 14px 28px; border-radius: 40px; color: white; font-weight: bold; cursor: pointer; margin: 8px; }
-    .quiz-question { background: rgba(255,255,255,0.1); border-radius: 15px; padding: 12px; margin: 10px 0; text-align: left; }
+    /* Елементи форм */
+    input { width: 85%; padding: 12px; margin: 8px 0; border-radius: 12px; border: none; background: #1e293b; color: white; text-align: center; font-size: 16px; outline: none; }
+    input:focus { border: 1px solid var(--accent); }
+    button { background: #3b82f6; border: none; padding: 14px 28px; border-radius: 40px; color: white; font-weight: bold; cursor: pointer; margin: 8px; transition: 0.3s; }
+    button:active { transform: scale(0.95); }
+    
+    .quiz-question { background: rgba(255,255,255,0.05); border-radius: 15px; padding: 12px; margin: 10px 0; text-align: left; border: 1px solid rgba(255,255,255,0.1); }
+    .quiz-question p { margin: 0 0 8px 0; font-size: 14px; color: #cbd5e1; }
   </style>
 </head>
 <body>
@@ -45,29 +59,29 @@
 
   <div id="mission-start" class="glass-panel">
     <h2>🕵️ СТАТУС: ПРИБУТТЯ</h2>
-    <p>Агенте, підключись до системи. Камера активується автоматично.</p>
+    <p>Агенте, для активації сканера Біосфери пройдіть синхронізацію знань.</p>
     <button onclick="startMission()">🚀 РОЗПОЧАТИ</button>
   </div>
 
   <div id="quiz-panel" class="glass-panel">
     <h2>📡 СИНХРОНІЗАЦІЯ</h2>
     <div id="quiz-content"></div>
-    <button onclick="checkQuiz()">ПЕРЕВІРИТИ</button>
-    <button onclick="hideQuiz()">ЗАКРИТИ</button>
-    <div id="quiz-result" style="margin-top:10px;"></div>
+    <button onclick="checkQuiz()">ПЕРЕВІРИТИ ВІДПОВІДІ</button>
+    <button onclick="hideQuiz()" style="background: #64748b;">ЗАКРИТИ</button>
+    <div id="quiz-result" style="margin-top:15px; font-weight: bold;"></div>
   </div>
 
   <div id="decoder-panel" class="glass-panel">
     <h2>🔐 ДЕШИФРАТОР</h2>
-    <p>Введіть отриманий ключ:</p>
-    <input id="code-input" type="text" placeholder="???">
-    <button onclick="attemptActivation()">🔓 АКТИВУВАТИ</button>
-    <button onclick="hideDecoder()">НАЗАД</button>
+    <p>Введіть отриманий код-пароль:</p>
+    <input id="code-input" type="text" placeholder="Введіть слово тут...">
+    <button onclick="attemptActivation()">🔓 АКТИВУВАТИ AR</button>
+    <button onclick="hideDecoder()" style="background: #64748b;">НАЗАД</button>
   </div>
 
   <div id="ar-instruction" class="glass-panel">
-    <h2 style="color: #4ade80; margin: 0;">🌍 СИСТЕМА ГОТОВА</h2>
-    <p style="margin: 10px 0 0 0;">Торкнись підлоги, щоб знайти артефакт.</p>
+    <h2 style="color: #4ade80; margin: 0;">🌍 СКАНЕР АКТИВНИЙ</h2>
+    <p style="margin: 10px 0 0 0;">Торкнись підлоги, щоб виявити Артефакт.</p>
   </div>
 
   <a-scene 
@@ -84,20 +98,21 @@
     <a-camera id="camera" raycaster="objects: .cantap, .planet-planted" cursor="fuse: false; rayOrigin: mouse"></a-camera>
 
     <a-light type="ambient" intensity="0.8"></a-light>
-    <a-entity light="type: directional; intensity: 1; castShadow: true" position="1 4 3"></a-entity>
+    <a-entity light="type: directional; intensity: 1; position: 1 4 3"></a-entity>
 
     <a-box id="ground" class="cantap" scale="1000 0.05 1000" position="0 -0.02 0" visible="false"></a-box>
 
   </a-scene>
 
   <script>
-    // Стан готовності
     window.isARReady = false;
 
+    // Масив питань
     const questions = [
       { q: "1. Скільки мільярдів років тому виникло життя?", a: "3,5" },
-      { q: "2. Прізвище засновника вчення про біосферу?", a: "вернадський" },
-      { q: "3. Сфера розуму — це...?", a: "ноосфера" }
+      { q: "2. Хто засновник вчення про біосферу?", a: "вернадський" },
+      { q: "3. Назви 4 групи орг-мів (через пробіл):", a: "рослини тварини гриби бактерії" },
+      { q: "4. Як називається «сфера розуму»?", a: "ноосфера" }
     ];
 
     function startMission() {
@@ -107,41 +122,57 @@
       showQuiz();
     }
 
-    function showQuiz() { document.getElementById('quiz-panel').style.display = 'block'; renderQuiz(); }
+    function showQuiz() { 
+      document.getElementById('quiz-panel').style.display = 'block'; 
+      renderQuiz(); 
+    }
+
     function hideQuiz() { document.getElementById('quiz-panel').style.display = 'none'; }
     function showDecoder() { document.getElementById('decoder-panel').style.display = 'block'; }
     function hideDecoder() { document.getElementById('decoder-panel').style.display = 'none'; }
 
     function renderQuiz() {
+      const container = document.getElementById('quiz-content');
+      if (container.innerHTML !== "") return; // Не перемальовувати, якщо вже є
+      
       let html = '';
       questions.forEach((q, i) => {
-        html += `<div class="quiz-question"><p>${q.q}</p><input id="ans${i}" autocomplete="off"></div>`;
+        html += `
+          <div class="quiz-question">
+            <p>${q.q}</p>
+            <input id="ans${i}" placeholder="Відповідь..." autocomplete="off">
+          </div>`;
       });
-      document.getElementById('quiz-content').innerHTML = html;
+      container.innerHTML = html;
     }
 
     function checkQuiz() {
       let score = 0;
       questions.forEach((q, i) => {
-        if (document.getElementById(`ans${i}`).value.toLowerCase().includes(q.a)) score++;
+        const userAns = document.getElementById(`ans${i}`).value.toLowerCase().trim();
+        if (userAns.includes(q.a)) score++;
       });
-      if (score >= 2) {
-        document.getElementById('quiz-result').innerHTML = "✅ КЛЮЧ: <b style='color:#4ade80'>БІОСФЕРА</b>";
+
+      const res = document.getElementById('quiz-result');
+      if (score >= 3) {
+        res.innerHTML = "✅ СИНХРОНІЗАЦІЯ УСПІШНА!<br>КЛЮЧ: <span style='color:#4ade80'>БІОСФЕРА</span>";
         document.getElementById('open-decoder').classList.add('active');
       } else {
-        document.getElementById('quiz-result').innerHTML = "❌ Треба мінімум 2 правильні відповіді.";
+        res.innerHTML = `<span style='color:#f87171;'>❌ Результат: ${score}/${questions.length}. Потрібно мінімум 3 правильні відповіді.</span>`;
       }
     }
 
     function attemptActivation() {
-      if (document.getElementById('code-input').value.trim().toLowerCase() === 'біосфера') {
+      const code = document.getElementById('code-input').value.trim().toLowerCase();
+      if (code === 'біосфера') {
         window.isARReady = true;
         hideDecoder();
-        document.getElementById('quiz-btn').remove();
-        document.getElementById('open-decoder').remove();
+        document.getElementById('quiz-btn').style.display = 'none';
+        document.getElementById('open-decoder').style.display = 'none';
         document.getElementById('ar-instruction').style.display = 'block';
+        if (navigator.vibrate) navigator.vibrate(200);
       } else {
-        alert('Код невірний!');
+        alert('Помилка доступу! Невірний код.');
       }
     }
   </script>
