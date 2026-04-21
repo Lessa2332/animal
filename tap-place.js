@@ -1,6 +1,6 @@
 /* globals AFRAME, THREE */
 
-// Поліфіл roundRect (без змін)
+// Поліфіл roundRect
 if (!CanvasRenderingContext2D.prototype.roundRect) {
   CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
     if (w < 2 * r) r = w / 2;
@@ -24,19 +24,18 @@ AFRAME.registerComponent('tap-place', {
   onClick(event) {
     if (!window.isARReady) return;
 
-    // Отримуємо перетин та елемент, на який клікнули
     const intersection = event.detail.intersection;
     if (!intersection) return;
 
     const targetEl = intersection.object.el;
 
-    // Якщо клікнули по вже розміщеній планеті – збираємо артефакт
-    if (targetEl && targetEl.classList && targetEl.classList.contains('planet-planted')) {
+    // 1. КЛІК ПО ПЛАНЕТІ — ЗБІР
+    if (targetEl && targetEl.classList.contains('planet-planted')) {
       this.collectArtifact(targetEl);
       return;
     }
 
-    // Розміщення нової планети (тільки один раз)
+    // 2. РОЗМІЩЕННЯ (якщо ще не розміщено)
     if (document.querySelector('.artifact-group')) return;
 
     const { point } = intersection;
@@ -45,7 +44,6 @@ AFRAME.registerComponent('tap-place', {
     group.setAttribute('position', point);
     this.el.sceneEl.appendChild(group);
 
-    // Модель планети
     const planet = document.createElement('a-entity');
     planet.classList.add('planet-planted', 'cantap');
     planet.setAttribute('gltf-model', '#planetModel');
@@ -53,7 +51,6 @@ AFRAME.registerComponent('tap-place', {
     planet.setAttribute('animation', 'property: rotation; to: 0 360 0; dur: 15000; loop: true; easing: linear');
     group.appendChild(planet);
 
-    // Інформаційна панель
     const infoPlane = document.createElement('a-plane');
     infoPlane.setAttribute('width', '1.5');
     infoPlane.setAttribute('height', '1.2');
@@ -61,18 +58,14 @@ AFRAME.registerComponent('tap-place', {
     infoPlane.setAttribute('material', 'src: #infoCanvas; transparent: true; side: double');
     group.appendChild(infoPlane);
 
-    // 🔧 ВИПРАВЛЕНО: чекаємо, поки площина завантажиться, і тільки тоді малюємо текст
-    infoPlane.addEventListener('loaded', () => {
-      this.drawInfoOnPlane(infoPlane);
-    });
-
+    this.drawInfoOnPlane(infoPlane);
     document.getElementById('ar-instruction').style.display = 'none';
   },
 
-  // 🔧 НОВИЙ МЕТОД – малює на канвасі та оновлює текстуру конкретної площини
   drawInfoOnPlane(planeEl) {
     const canvas = document.getElementById('infoCanvas');
     const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, 512, 512);
     
     ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
     ctx.roundRect(0, 0, 512, 512, 40);
@@ -90,17 +83,18 @@ AFRAME.registerComponent('tap-place', {
     ctx.fillStyle = '#4ade80';
     ctx.fillText('👉 ТОРКНИСЬ ПЛАНЕТИ', 40, 350);
 
-    // Оновлюємо текстуру саме цієї площини
     const mesh = planeEl.getObject3D('mesh');
-    if (mesh && mesh.material) {
+    if (mesh && mesh.material && mesh.material.map) {
       mesh.material.map.needsUpdate = true;
     }
   },
 
   collectArtifact(el) {
+    // Анімація зникнення
     el.setAttribute('animation__shrink', 'property: scale; to: 0 0 0; dur: 600; easing: easeInBack');
     
     const pos = el.object3D.position;
+    // Ефект зірочок
     for (let i = 0; i < 10; i++) {
       const star = document.createElement('a-text');
       star.setAttribute('value', '⭐');
@@ -111,7 +105,7 @@ AFRAME.registerComponent('tap-place', {
     }
 
     setTimeout(() => {
-      alert("🏆 Артефакт Біосфери отримано!");
+      alert("🏆 Артефакт Біосфери отримано! \n\n В кабінеті географії отримай Артефакт!");
       location.reload();
     }, 800);
   }
